@@ -1,10 +1,38 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import React, { useRef } from "react";
 
 const Homepage = () => {
+  const apiToken = process.env.REACT_APP_LANGUAGE_API_TOKEN;
+  const [language, setLanguage] = useState('');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const buttonRef = useRef(null);
+
+  useEffect(() => {
+    const detectLanguage = async () => {
+        const response = await fetch('https://api.language-detection.com/detect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`,
+            },
+            body: JSON.stringify({
+                text: "Your sample text here"
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            setLanguage(data.language); 
+        } else {
+            console.error('Failed to detect language');
+        }
+    };
+
+    detectLanguage();
+}, [apiToken]);
+
 
   const handleSendMessage = () => {
     if (!input.trim()) return;
@@ -20,8 +48,10 @@ const Homepage = () => {
     }, 1000);
   };
 
+
   return (
     <>
+    <h1>Detected Language is {language}</h1>
       <div className="chatbox">
         <div className="messages">
           {messages.map((msg, index) => (

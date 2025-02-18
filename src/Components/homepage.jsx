@@ -4,196 +4,167 @@ const languageMap = {
   en: "English",
   es: "Spanish",
   fr: "French",
-  de: "German",
-  it: "Italian",
-  pt: "Portuguese",
-  zh: "Chinese",
-  ja: "Japanese",
-  ko: "Korean",
   ru: "Russian",
-  ar: "Arabic",
-  hi: "Hindi",
+  tr: "Turkish",
+  pt: "Portuguese",
 };
 
 const Homepage = () => {
   const [languageDetector, setLanguageDetector] = useState(null);
   const [summarizer, setSummarizer] = useState(null);
-  const [translator, setTranslator] = useState(null);
-  const [language, setLanguage] = useState("");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [targetLanguage, setTargetLanguage] = useState("en");
   const buttonRef = useRef(null);
   let detectTimeout = null;
 
   useEffect(() => {
     async function setupLanguageDetector() {
-      if (!("ai" in self) || !self.ai.languageDetector) {
-        console.error("AI Language Detector API is not available.");
-        return;
-      }
-
-      const languageDetectorCapabilities = await self.ai.languageDetector.capabilities();
-      if (languageDetectorCapabilities.available === "no") {
-        console.error("Language Detector is not usable.");
-        return;
-      }
+      if (!("ai" in self) || !self.ai.languageDetector) return;
+      const capabilities = await self.ai.languageDetector.capabilities();
+      if (capabilities.available === "no") return;
 
       let detector;
-      if (languageDetectorCapabilities.available === "readily") {
+      if (capabilities.available === "readily") {
         detector = await self.ai.languageDetector.create();
       } else {
         detector = await self.ai.languageDetector.create({
           monitor(m) {
-            m.addEventListener("downloadprogress", (e) => {
-              console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
-            });
+            m.addEventListener("downloadprogress", console.log);
           },
         });
         await detector.ready;
       }
-
       setLanguageDetector(detector);
     }
-
     setupLanguageDetector();
   }, []);
 
   useEffect(() => {
     async function setupSummarizer() {
-      if (!("ai" in self) || !self.ai.summarizer) {
-        console.error("Summarizer API is not available.");
-        return;
-      }
+      if (!("ai" in self) || !self.ai.summarizer) return;
+      const capabilities = await self.ai.summarizer.capabilities();
+      if (capabilities.available === "no") return;
 
-      const summarizerCapabilities = await self.ai.summarizer.capabilities();
-      if (summarizerCapabilities.available === "no") return;
-
-      let summarizerInstance;
-      if (summarizerCapabilities.available === "readily") {
-        summarizerInstance = await self.ai.summarizer.create();
+      let summarizer;
+      if (capabilities.available === "readily") {
+        summarizer = await self.ai.summarizer.create();
       } else {
-        summarizerInstance = await self.ai.summarizer.create({
+        summarizer = await self.ai.summarizer.create({
           monitor(m) {
-            m.addEventListener("downloadprogress", (e) => {
-              console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
-            });
+            m.addEventListener("downloadprogress", console.log);
           },
         });
-        await summarizerInstance.ready;
+        await summarizer.ready;
       }
-      setSummarizer(summarizerInstance);
+      setSummarizer(summarizer);
     }
     setupSummarizer();
   }, []);
 
-  useEffect(() => {
-    async function setupTranslator() {
-      if (!("ai" in self) || !self.ai.translator) {
-        console.error("Translator API is not available.");
-        return;
-      }
-
-      const translatorCapabilities = await self.ai.translator.capabilities();
-      if (translatorCapabilities.languagePairAvailable(language, targetLanguage) === "no") {
-        console.error("Translation not supported for this language pair.");
-        return;
-      }
-
-      let translatorInstance;
-      if (translatorCapabilities.languagePairAvailable(language, targetLanguage) === "readily") {
-        translatorInstance = await self.ai.translator.create({
-          sourceLanguage: language,
-          targetLanguage: targetLanguage,
-        });
-      } else {
-        translatorInstance = await self.ai.translator.create({
-          sourceLanguage: language,
-          targetLanguage: targetLanguage,
-          monitor(m) {
-            m.addEventListener("downloadprogress", (e) => {
-              console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
-            });
-          },
-        });
-        await translatorInstance.ready;
-      }
-      setTranslator(translatorInstance);
-    }
-
-    if (language && targetLanguage) {
-      setupTranslator();
-    }
-  }, [language, targetLanguage]);
-
   const detectLanguage = async (text) => {
-    if (!text.trim()) {
-      setLanguage("");
-      return;
-    }
-
-    if (!languageDetector) {
-      console.error("Language detector is not initialized.");
-      return;
-    }
-
-    if (detectTimeout) clearTimeout(detectTimeout);
-
-    detectTimeout = setTimeout(async () => {
-      try {
-        const results = await languageDetector.detect(text);
-        if (results.length > 0) {
-          const langCode = results[0].detectedLanguage;
-          setLanguage(langCode);
+    if (!text.trim() || !languageDetector) return;
+    
+    clearTimeout(detectTimeout);
+    return new Promise(resolve => {
+      detectTimeout = setTimeout(async () => {
+        try {
+          const results = await languageDetector.detect(text);
+          if (results.length > 0) {
+            return resolve(results[0].detectedLanguage);
+          }
+        } catch (error) {
+          console.error("Language detection failed:", error);
         }
-      } catch (error) {
-        console.error("Language detection failed:", error);
-      }
-    }, 500);
+        resolve(null);
+      }, 500);
+    });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
-
-    setMessages((prev) => [
+    
+    const detectedLang = await detectLanguage(input);
+    setMessages(prev => [
       ...prev,
-      { text: input, sender: "user", language },
+      { 
+        text: input,
+        originalText: input,
+        sender: "user",
+        sourceLanguage: detectedLang,
+        targetLanguage: "en",
+        translated: false
+      }
     ]);
-    detectLanguage(input);
     setInput("");
   };
 
-  const handleSummarize = async (text) => {
-    if (!summarizer) {
-      console.error("Summarizer not initialized");
-      return;
-    }
-
+  const handleSummarize = async (text, index) => {
+    if (!summarizer) return;
+    
     try {
       const summary = await summarizer.summarize(text);
-      setMessages((prev) => [
-        ...prev,
-        { text: summary, sender: "bot" },
-      ]);
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[index] = { ...newMessages[index], summary };
+        return newMessages;
+      });
     } catch (error) {
       console.error("Summarization failed:", error);
     }
   };
 
-  const handleTranslate = async (text, index) => {
-    if (!translator) {
-      console.error("Translator not initialized");
-      return;
-    }
+  const handleTranslate = async (index) => {
+    const message = messages[index];
+    if (!message.sourceLanguage || message.sourceLanguage === message.targetLanguage) return;
 
     try {
-      const translatedText = await translator.translate(text);
-      const updatedMessages = [...messages];
-      updatedMessages[index].text = translatedText;
-      setMessages(updatedMessages);
+      const capabilities = await self.ai.translator.capabilities();
+      const available = capabilities.languagePairAvailable(
+        message.sourceLanguage,
+        message.targetLanguage
+      );
+
+      if (available === "no") {
+        console.error("Translation not supported for this language pair");
+        return;
+      }
+
+      const translator = await self.ai.translator.create({
+        sourceLanguage: message.sourceLanguage,
+        targetLanguage: message.targetLanguage,
+        monitor: available === "after-download" ? (m) => {
+          m.addEventListener("downloadprogress", console.log);
+        } : undefined
+      });
+
+      if (available === "after-download") await translator.ready;
+      
+      const translatedText = await translator.translate(message.originalText);
+      
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[index] = { 
+          ...newMessages[index],
+          text: translatedText,
+          translated: true
+        };
+        return newMessages;
+      });
     } catch (error) {
       console.error("Translation failed:", error);
     }
+  };
+
+  const handleLanguageChange = (index, newLang) => {
+    setMessages(prev => {
+      const newMessages = [...prev];
+      newMessages[index] = { 
+        ...newMessages[index],
+        targetLanguage: newLang,
+        translated: false
+      };
+      return newMessages;
+    });
   };
 
   const wordCount = (text) => text.trim().split(/\s+/).length;
@@ -205,25 +176,28 @@ const Homepage = () => {
           <div key={index}>
             <div className={`message ${msg.sender === "user" ? "user-msg" : "bot-msg"}`}>
               {msg.text}
+              {msg.translated && (
+                <div className="translation-note">
+                  (Translated from {languageMap[msg.sourceLanguage] || msg.sourceLanguage})
+                </div>
+              )}
             </div>
-            {msg.sender === "user" && msg.language && (
+            {msg.sender === "user" && (
               <div className="language-info">
-                <p>Detected Language: {languageMap[msg.language] || msg.language}</p>
+                <p>Detected Language: {languageMap[msg.sourceLanguage] || msg.sourceLanguage}</p>
                 <select
-                  value={targetLanguage}
-                  onChange={(e) => setTargetLanguage(e.target.value)}
+                  value={msg.targetLanguage}
+                  onChange={(e) => handleLanguageChange(index, e.target.value)}
                 >
-                  {Object.keys(languageMap).map((langCode) => (
-                    <option key={langCode} value={langCode}>
-                      {languageMap[langCode]}
-                    </option>
+                  {Object.entries(languageMap).map(([code, name]) => (
+                    <option key={code} value={code}>{name}</option>
                   ))}
                 </select>
-                <button onClick={() => handleTranslate(msg.text, index)}>
+                <button onClick={() => handleTranslate(index)}>
                   Translate
                 </button>
-                {wordCount(msg.text) > 150 && (
-                  <button onClick={() => handleSummarize(msg.text)}>
+                {wordCount(msg.originalText) > 150 && (
+                  <button onClick={() => handleSummarize(msg.originalText, index)}>
                     Summarize
                   </button>
                 )}
@@ -234,25 +208,16 @@ const Homepage = () => {
       </div>
 
       <div className="input-case">
-        <div className="top">
-          <input
+          <textarea
+          className="input-box"
             type="text"
-            className="input-box"
             value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              detectLanguage(e.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                buttonRef.current.click();
-              }
-            }}
-          />
-          <button ref={buttonRef} className="send" onClick={handleSendMessage}>
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && buttonRef.current.click()}
+          ></textarea>
+          <button className="send" ref={buttonRef} onClick={handleSendMessage}>
             <i className="fa-solid fa-paper-plane"></i>
           </button>
-        </div>
       </div>
     </div>
   );

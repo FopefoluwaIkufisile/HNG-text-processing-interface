@@ -90,6 +90,14 @@ body {
   cursor: pointer;
   border-radius: 5px;
 }
+.summarize-btn {
+  padding: 5px 10px;
+  border: none;
+  background: pink;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
 
 .translate-btn:hover {
   background: darkorange;

@@ -4,12 +4,73 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/ai-removebg-preview.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="origin-trial" content="Amsilwd7D9N6PKMkCLO0jbieTwkUkMlw5iJGHo2Q7UuBS8PllZkzQV9nz0ovux+LH1i0RSpNaM/oHxR+NFyU9A8AAABreyJvcmlnaW4iOiJodHRwczovL2ZvcGVmb2x1d2Fpa3VmaXNpbGUuZ2l0aHViLmlvOjQ0MyIsImZlYXR1cmUiOiJMYW5ndWFnZURldGVjdGlvbkFQSSIsImV4cGlyeSI6MTc0OTU5OTk5OX0=">
+    <div id="origin-trial-metatags"></div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <title>Ai generator</title>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.jsx">
+  // Define origin trial tokens for each environment
+  const originTrials = {
+    localhost: [
+      {
+        httpEquiv: "origin-trial",
+        content:
+          "AuFXgJcLUjLclIYh6Qjl7oPqudB3yPjQeWrKTFnYrnpFV1N1WUgVqzzQHz8hl/KWrZ4EQsszHlgheb+xX7q/3w4AAABXeyJvcmlnaW4iOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJmZWF0dXJlIjoiTGFuZ3VhZ2VEZXRlY3Rpb25BUEkiLCJleHBpcnkiOjE3NDk1OTk5OTl9",
+      },
+      {
+        httpEquiv: "origin-trial",
+        content:
+          "Au84U6xfVvZ0k3d9h+7XU2V1x9MPwG9cRoHLl6I9S2gMsdMVAV5uix/XpMK6WGwoJHGkqn5KZAkV55nZMugggQUAAABReyJvcmlnaW4iOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJmZWF0dXJlIjoiVHJhbnNsYXRpb25BUEkiLCJleHBpcnkiOjE3NTMxNDI0MDB9",
+      },
+      {
+        httpEquiv: "origin-trial",
+        content:
+          "AglaJ9GwQ0IAgWT52vALtSKBaE1A3+Y+P+OkbQHWVYIEVaWufFk1b8ElI12sc5b2ekqGiYkU7tNy7DPAjRiu+AQAAABVeyJvcmlnaW4iOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJmZWF0dXJlIjoiQUlTdW1tYXJpemF0aW9uQVBJIiwiZXhwaXJ5IjoxNzUzMTQyNDAwfQ==",
+      },
+    ],
+    github: [
+      {
+        httpEquiv: "origin-trial",
+        content:
+          "Amsilwd7D9N6PKMkCLO0jbieTwkUkMlw5iJGHo2Q7UuBS8PllZkzQV9nz0ovux+LH1i0RSpNaM/oHxR+NFyU9A8AAABreyJvcmlnaW4iOiJodHRwczovL2ZvcGVmb2x1d2Fpa3VmaXNpbGUuZ2l0aHViLmlvOjQ0MyIsImZlYXR1cmUiOiJMYW5ndWFnZURldGVjdGlvbkFQSSIsImV4cGlyeSI6MTc0OTU5OTk5OX0=",
+      },
+      {
+        httpEquiv: "origin-trial",
+        content:
+          "AmdDOehqptBMpb1Cf6uasMnBBhyGHh+fwB+qxJDCfkeMMA6YhrLwnZhW2/g4akXFX3ANcljEk0rQLHyAtTSV8AkAAABpeyJvcmlnaW4iOiJodHRwczovL2ZvcGVmb2x1d2Fpa3VmaXNpbGUuZ2l0aHViLmlvOjQ0MyIsImZlYXR1cmUiOiJBSVN1bW1hcml6YXRpb25BUEkiLCJleHBpcnkiOjE3NTMxNDI0MDB9",
+      },
+      {
+        httpEquiv: "origin-trial",
+        content:
+          "Aln7PNaErAdse7Ng1Rd0eStLuJcHasRSawF0EhVgfM6f8lOrwpDSsW5AGCiXAXAitQF+CM8MVY5io31oz1imYQQAAABleyJvcmlnaW4iOiJodHRwczovL2ZvcGVmb2x1d2Fpa3VmaXNpbGUuZ2l0aHViLmlvOjQ0MyIsImZlYXR1cmUiOiJUcmFuc2xhdGlvbkFQSSIsImV4cGlyeSI6MTc1MzE0MjQwMH0=",
+      },
+    ],
+  };
+
+  // Determine the current origin
+  const currentOrigin = window.location.origin;
+  console.log(currentOrigin)
+
+  // Select the appropriate origin trial tokens
+  let selectedOriginTrials;
+  if (currentOrigin.includes("localhost")) {
+    selectedOriginTrials = originTrials.localhost;
+  } else if (currentOrigin.includes("github.io")) {
+    selectedOriginTrials = originTrials.github;
+  }
+
+  // Insert the meta tags into the DOM
+  if (selectedOriginTrials) {
+    const metaTagsContainer = document.getElementById("origin-trial-metatags");
+    selectedOriginTrials.forEach((trial) => {
+      const metaTag = document.createElement("meta");
+      metaTag.httpEquiv = trial.httpEquiv;
+      metaTag.content = trial.content;
+      metaTagsContainer.appendChild(metaTag);
+    });
+  }
+    </script>
   </body>
 </html>

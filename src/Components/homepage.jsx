@@ -10,6 +10,13 @@ const languageMap = {
 };
 
 const Homepage = () => {
+
+  useEffect(() => {
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      alert("This feature is not supported on mobile devices. Please use a desktop browser.");
+    }
+  }, []);
+
   const [languageDetector, setLanguageDetector] = useState(null);
   const [summarizer, setSummarizer] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -20,11 +27,16 @@ const Homepage = () => {
 
   useEffect(() => {
     async function setupLanguageDetector() {
-      if (!("ai" in self) || !self.ai.languageDetector) return;
-
+      if (!("ai" in self) || !self.ai.languageDetector) {
+        console.error("Language Detector API is not supported in this browser.");
+        return;
+      }
+  
       const capabilities = await self.ai.languageDetector.capabilities();
-      if (capabilities.available === "no") return;
-
+      if (capabilities.available === "no") {
+        console.error("Language Detector is not usable.");
+        return;
+      }
       let detector;
       if (capabilities.available === "readily") {
         detector = await self.ai.languageDetector.create();

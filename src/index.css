@@ -92,6 +92,10 @@ body {
   border-radius: 5px;
   cursor: pointer;
 }
+.heading{
+  text-align: center;
+  color: white;
+}
 
 .clear-chat-btn:hover {
   background-color: #ff1a1a;

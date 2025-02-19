@@ -280,7 +280,8 @@ const Homepage = () => {
 
   const wordCount = (text) => text.trim().split(/\s+/).length;
 
-  return (
+  return (<>
+  <h1 className="heading">AI TEXT INTERFACE</h1>
     <div className="chatbox">
       <div className="messages">
         {messages.map((msg, index) => (
@@ -293,7 +294,7 @@ const Homepage = () => {
               {msg.text}
               {msg.translated && (
                 <div className="translation-note">
-                  (Translated from{" "}
+                  (Translated to{" "}
                   {languageMap[msg.sourceLanguage] || msg.sourceLanguage})
                 </div>
               )}
@@ -358,6 +359,7 @@ const Homepage = () => {
         Clear Chat
       </button>
     </div>
+    </>
   );
 };
 

@@ -10,13 +10,6 @@ const languageMap = {
 };
 
 const Homepage = () => {
-
-  useEffect(() => {
-    if (/Mobi|Android/i.test(navigator.userAgent)) {
-      alert("This feature is not supported on mobile devices. Please use a desktop browser.");
-    }
-  }, []);
-
   const [languageDetector, setLanguageDetector] = useState(null);
   const [summarizer, setSummarizer] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -26,17 +19,66 @@ const Homepage = () => {
   const abortControllers = useRef(new Map());
 
   useEffect(() => {
+    const savedMessages = localStorage.getItem("chatMessages");
+    const savedInput = localStorage.getItem("chatInput");
+    if (savedMessages && messages.length === 0) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        setMessages(parsedMessages);
+      } catch (error) {
+        console.error("Failed to parse messages from localStorage:", error);
+      }
+    }
+    if (savedInput) {
+      setInput(savedInput);
+    }
+  }, []);
+  
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem("chatMessages", JSON.stringify(messages));
+      } catch (error) {
+        console.error("Failed to save messages to localStorage:", error);
+      }
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem("chatInput", input);
+  }, [input]);
+
+  const handleClearChat = () => {
+    setMessages([]);
+    setInput("");
+    localStorage.removeItem("chatMessages");
+    localStorage.removeItem("chatInput");
+  };
+
+  useEffect(() => {
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    if (isMobile && window.innerWidth <= 768) {
+      alert(
+        "This feature is not supported on mobile devices. Please use a desktop browser."
+      );
+    }
+  }, []);
+
+  useEffect(() => {
     async function setupLanguageDetector() {
       if (!("ai" in self) || !self.ai.languageDetector) {
-        console.error("Language Detector API is not supported in this browser.");
+        console.error(
+          "Language Detector API is not supported in this browser."
+        );
         return;
       }
-  
+
       const capabilities = await self.ai.languageDetector.capabilities();
       if (capabilities.available === "no") {
         console.error("Language Detector is not usable.");
         return;
       }
+
       let detector;
       if (capabilities.available === "readily") {
         detector = await self.ai.languageDetector.create();
@@ -153,15 +195,11 @@ const Homepage = () => {
 
       setMessages((prev) => [
         ...prev.slice(0, index + 1),
-
         {
           text: "Failed to generate summary. Please try again.",
-
           sender: "bot",
-
           summary: true,
         },
-
         ...prev.slice(index + 1),
       ]);
     } finally {
@@ -267,6 +305,7 @@ const Homepage = () => {
                   {languageMap[msg.sourceLanguage] || msg.sourceLanguage}
                 </p>
                 <select
+                  className="languages-dropdown"
                   value={msg.targetLanguage}
                   onChange={(e) => handleLanguageChange(index, e.target.value)}
                 >
@@ -276,12 +315,15 @@ const Homepage = () => {
                     </option>
                   ))}
                 </select>
-                <button  className="translate-btn" onClick={() => handleTranslate(index)}>
+                <button
+                  className="translate-btn"
+                  onClick={() => handleTranslate(index)}
+                >
                   {msg.translated ? "Retranslate" : "Translate"}
                 </button>
                 {wordCount(msg.originalText) > 150 && (
                   <button
-                  className="summarize-btn"
+                    className="summarize-btn"
                     onClick={() => handleSummarize(msg.originalText, index)}
                   >
                     Summarize
@@ -300,19 +342,22 @@ const Homepage = () => {
       )}
 
       <div className="input-case">
-
-          <input
+        <input
           className="input-box"
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && buttonRef.current.click()}
-          />
-          <button className="send" ref={buttonRef} onClick={handleSendMessage}>
-            <i className="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && buttonRef.current.click()}
+        />
+        <button className="send" ref={buttonRef} onClick={handleSendMessage}>
+          <i className="fa-solid fa-paper-plane"></i>
+        </button>
       </div>
+
+      <button className="clear-chat-btn" onClick={handleClearChat}>
+        Clear Chat
+      </button>
+    </div>
   );
 };
 

@@ -337,10 +337,11 @@ const Homepage = () => {
       </div>
 
       {isSummarizing && (
-        <div className="loading-spinner">
-          Summarizing... (This may take a moment)
-        </div>
-      )}
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+    <div className="loading-text">Summarizing...</div>
+  </div>
+)}
 
       <div className="input-case">
         <input

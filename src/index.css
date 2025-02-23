@@ -27,6 +27,10 @@ body {
   padding: 15px;
   overflow: hidden;
 }
+.message-case{
+  display: flex;
+  flex-direction: column;
+}
 
 .messages {
   flex: 1;
@@ -78,6 +82,7 @@ body {
   border-radius: 5px;
   max-width: 75%;
   word-wrap: break-word;
+  align-self: flex-end;
 }
 .languages-dropdown{
   outline: none;

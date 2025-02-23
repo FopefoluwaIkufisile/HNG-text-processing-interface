@@ -285,7 +285,7 @@ const Homepage = () => {
     <div className="chatbox">
       <div className="messages">
         {messages.map((msg, index) => (
-          <div key={index}>
+          <div key={index} className="message-case">
             <div
               className={`message ${
                 msg.sender === "user" ? "user-msg" : "bot-msg"

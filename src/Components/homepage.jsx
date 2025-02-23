@@ -344,13 +344,13 @@ const Homepage = () => {
 )}
 
       <div className="input-case">
-        <input
+        <textarea
           className="input-box"
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && buttonRef.current.click()}
-        />
+        ></textarea>
         <button className="send" ref={buttonRef} onClick={handleSendMessage}>
           <i className="fa-solid fa-paper-plane"></i>
         </button>
